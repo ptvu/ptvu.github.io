@@ -65,7 +65,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Leukemia</a></li><li><a href="#2">CVX</a></li><li><a href="#3">Fmincon</a></li><li><a href="#4">Projected Gradient Descent</a></li></ul><h2>Called Functions</h2><ul><li><a href="#cvx_begin">cvx_begin </a></li><li><a href="#cvx_end">cvx_end </a></li><li><a href="#cvx_solver">cvx_solver </a></li><li><a href="#minimize">minimize </a></li><li><a href="#subject">subject </a></li><li><a href="#variables">variables </a></li><li><a href="#evaluate_classification">evaluate_classification </a></li><li><a href="#proj_unit_box">proj_unit_box </a></li><li><a href="#svm_qp">svm_qp </a></li></ul></div><h2>Leukemia<a name="1"></a></h2><pre class="codeinput"><span class="keyword">global</span> lambda A
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Leukemia</a></li><li><a href="#2">CVX</a></li><li><a href="#3">Fmincon</a></li><li><a href="#4">Projected Gradient Descent</a></li><li><a href="#5">FISTA</a></li></ul><h2>Called Functions</h2><ul><li><a href="#cvx_begin">cvx_begin </a></li><li><a href="#cvx_end">cvx_end </a></li><li><a href="#cvx_solver">cvx_solver </a></li><li><a href="#evaluate_classification">evaluate_classification </a></li><li><a href="#proj_unit_box">proj_unit_box </a></li><li><a href="#svm_qp">svm_qp </a></li></ul></div><h2>Leukemia<a name="1"></a></h2><pre class="codeinput"><span class="keyword">global</span> lambda A
 rng(123);
 cvx_solver <span class="string">mosek</span>;
 leukemia = load(<span class="string">'./matlab_data/leukemia_train_and_test.mat'</span>);
@@ -131,19 +131,19 @@ ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU
 0   1.6e+01  2.0e+00  3.6e+01  0.00e+00   -3.750000000e+01  0.000000000e+00   1.0e+00  0.10  
 1   8.0e-01  1.0e-01  1.8e+00  1.00e+00   -1.883875997e+00  -3.759317918e-04  5.0e-02  0.13  
 2   4.4e-02  5.5e-03  1.0e-01  1.01e+00   -1.023893505e-01  -5.188676780e-04  2.7e-03  0.15  
-3   9.4e-03  1.2e-03  2.2e-02  1.15e+00   -2.132232254e-02  -1.669205656e-03  5.9e-04  0.16  
-4   5.0e-03  6.2e-04  1.1e-02  1.32e+00   -1.137934439e-02  -2.254846722e-03  3.1e-04  0.18  
-5   2.4e-03  3.0e-04  5.5e-03  1.29e+00   -6.335356796e-03  -2.432209080e-03  1.5e-04  0.20  
-6   8.5e-04  1.1e-04  1.9e-03  1.24e+00   -3.680339055e-03  -2.443549456e-03  5.3e-05  0.22  
-7   1.9e-04  2.3e-05  4.3e-04  1.16e+00   -2.679462869e-03  -2.428656524e-03  1.2e-05  0.23  
-8   4.0e-05  5.0e-06  9.1e-05  1.05e+00   -2.477802299e-03  -2.425464506e-03  2.5e-06  0.25  
-9   8.2e-06  1.0e-06  1.9e-05  1.02e+00   -2.435535360e-03  -2.424844375e-03  5.1e-07  0.27  
-10  9.9e-07  1.2e-07  2.3e-06  1.00e+00   -2.425983642e-03  -2.424702531e-03  6.2e-08  0.28  
-11  5.6e-08  7.0e-09  1.3e-07  1.00e+00   -2.424751651e-03  -2.424678955e-03  3.5e-09  0.30  
-12  7.6e-10  9.5e-11  1.7e-09  1.00e+00   -2.424678479e-03  -2.424677496e-03  4.7e-11  0.32  
-Interior-point optimizer terminated. Time: 0.32. 
+3   9.4e-03  1.2e-03  2.2e-02  1.15e+00   -2.132232254e-02  -1.669205656e-03  5.9e-04  0.17  
+4   5.0e-03  6.2e-04  1.1e-02  1.32e+00   -1.137934439e-02  -2.254846722e-03  3.1e-04  0.19  
+5   2.4e-03  3.0e-04  5.5e-03  1.29e+00   -6.335356796e-03  -2.432209080e-03  1.5e-04  0.21  
+6   8.5e-04  1.1e-04  1.9e-03  1.24e+00   -3.680339055e-03  -2.443549456e-03  5.3e-05  0.23  
+7   1.9e-04  2.3e-05  4.3e-04  1.16e+00   -2.679462869e-03  -2.428656524e-03  1.2e-05  0.24  
+8   4.0e-05  5.0e-06  9.1e-05  1.05e+00   -2.477802299e-03  -2.425464506e-03  2.5e-06  0.26  
+9   8.2e-06  1.0e-06  1.9e-05  1.02e+00   -2.435535360e-03  -2.424844375e-03  5.1e-07  0.28  
+10  9.9e-07  1.2e-07  2.3e-06  1.00e+00   -2.425983642e-03  -2.424702531e-03  6.2e-08  0.30  
+11  5.6e-08  7.0e-09  1.3e-07  1.00e+00   -2.424751651e-03  -2.424678955e-03  3.5e-09  0.31  
+12  7.6e-10  9.5e-11  1.7e-09  1.00e+00   -2.424678479e-03  -2.424677496e-03  4.7e-11  0.33  
+Interior-point optimizer terminated. Time: 0.33. 
 
-Optimizer terminated. Time: 0.35    
+Optimizer terminated. Time: 0.37    
 
 Interior-point solution summary
   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
@@ -151,8 +151,8 @@ Interior-point solution summary
   Primal.  obj: -2.4246784790e-03   Viol.  con: 8e-10    var: 0e+00    cones: 0e+00  
   Dual.    obj: -2.4246774958e-03   Viol.  con: 0e+00    var: 1e-11    cones: 0e+00  
 Optimizer summary
-  Optimizer                 -                        time: 0.35    
-    Interior-point          - iterations : 12        time: 0.32    
+  Optimizer                 -                        time: 0.37    
+    Interior-point          - iterations : 12        time: 0.33    
       Basis identification  -                        time: 0.00    
         Primal              - iterations : 0         time: 0.00    
         Dual                - iterations : 0         time: 0.00    
@@ -291,7 +291,8 @@ Active inequalities (to within options.TolCon = 1e-06):
            recall: 0.6500
                f1: 0.7879
 
-</pre><h2>Projected Gradient Descent<a name="4"></a></h2><pre class="codeinput">alpha = 0.5 * all_ones;
+</pre><h2>Projected Gradient Descent<a name="4"></a></h2><pre class="codeinput">lambda = 1.0;
+alpha = 0.5 * all_ones;
 L = svds(A, 1)^2;
 step_size = 1/L;
 stats = [];
@@ -302,7 +303,6 @@ stats = [];
     stats = [stats; struct(<span class="string">'step'</span>, cur_step, <span class="string">'alpha'</span>, alpha, <span class="string">'f'</span>, f, <span class="string">'scale_f'</span>, (f - cvx_optval) / abs(fval))];
 <span class="keyword">end</span>
 projected_gradient_descent_stats = stats;
-
 plot_data = [];
 <span class="keyword">for</span> i = 1 : size(stats, 1)
     plot_data = [plot_data; stats(i).step, stats(i).scale_f];
@@ -323,7 +323,32 @@ alpha_fmincon = alpha;
            recall: 0.6500
                f1: 0.7879
 
-</pre><img vspace="5" hspace="5" src="svm_algorithm_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="svm_algorithm_01.png" alt=""> <h2>FISTA<a name="5"></a></h2><pre class="codeinput">lambda = 1.0;
+all_ones = ones(n_train, 1);
+L = svds(A, 1)^2;
+step_size = 1/L;
+stats = [];
+alpha_last = 0.5 * all_ones;
+alpha_second = alpha_last;
+<span class="keyword">for</span> cur_step = 1 : 200
+    y = alpha_last + (cur_step - 2) / (cur_step + 1) * (alpha_last - alpha_second);
+    [~, g] = svm_qp(y);
+    alpha = proj_unit_box(y - step_size * g);
+    alpha_second = alpha_last;
+    alpha_last = alpha;
+    [f, ~] = svm_qp(alpha);
+    stats = [stats; struct(<span class="string">'step'</span>, cur_step, <span class="string">'alpha'</span>, alpha, <span class="string">'f'</span>, f, <span class="string">'scale_f'</span>, (f - cvx_optval) / abs(fval))];
+<span class="keyword">end</span>
+fista_stats = stats;
+
+plot_data = [];
+<span class="keyword">for</span> i = 1 : size(stats, 1)
+    plot_data = [plot_data; fista_stats(i).step, fista_stats(i).scale_f, <span class="keyword">...</span>
+        projected_gradient_descent_stats(i).scale_f];
+<span class="keyword">end</span>
+figure; semilogy(plot_data(:, 1), plot_data(:, 2), <span class="string">'b--'</span>); hold <span class="string">on</span>
+semilogy(plot_data(:, 1), plot_data(:, 3), <span class="string">'r-'</span>); legend(<span class="string">'FISTA'</span>, <span class="string">'Projected Gradient Descent'</span>);
+</pre><img vspace="5" hspace="5" src="svm_algorithm_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Leukemia
 global lambda A
@@ -366,6 +391,7 @@ disp(full_score)
 alpha_fmincon = alpha;
 
 %% Projected Gradient Descent
+lambda = 1.0;
 alpha = 0.5 * all_ones;
 L = svds(A, 1)^2;
 step_size = 1/L;
@@ -377,7 +403,6 @@ for cur_step = 1 : 400
     stats = [stats; struct('step', cur_step, 'alpha', alpha, 'f', f, 'scale_f', (f - cvx_optval) / abs(fval))];
 end
 projected_gradient_descent_stats = stats;
-
 plot_data = [];
 for i = 1 : size(stats, 1)
     plot_data = [plot_data; stats(i).step, stats(i).scale_f];
@@ -390,6 +415,32 @@ full_score = evaluate_classification(predicted, y_test);
 disp(full_score)
 alpha_fmincon = alpha;
 
+%% FISTA
+lambda = 1.0;
+all_ones = ones(n_train, 1);
+L = svds(A, 1)^2;
+step_size = 1/L;
+stats = [];
+alpha_last = 0.5 * all_ones;
+alpha_second = alpha_last;
+for cur_step = 1 : 200
+    y = alpha_last + (cur_step - 2) / (cur_step + 1) * (alpha_last - alpha_second);
+    [~, g] = svm_qp(y);
+    alpha = proj_unit_box(y - step_size * g);
+    alpha_second = alpha_last;
+    alpha_last = alpha;
+    [f, ~] = svm_qp(alpha);
+    stats = [stats; struct('step', cur_step, 'alpha', alpha, 'f', f, 'scale_f', (f - cvx_optval) / abs(fval))];
+end
+fista_stats = stats;
+
+plot_data = [];
+for i = 1 : size(stats, 1)
+    plot_data = [plot_data; fista_stats(i).step, fista_stats(i).scale_f, ...
+        projected_gradient_descent_stats(i).scale_f];
+end
+figure; semilogy(plot_data(:, 1), plot_data(:, 2), 'bREPLACE_WITH_DASH_DASH'); hold on
+semilogy(plot_data(:, 1), plot_data(:, 3), 'r-'); legend('FISTA', 'Projected Gradient Descent');
 ##### SOURCE END #####
 --></body></html>
 <a name="cvx_begin"></a>
@@ -1019,298 +1070,6 @@ cvx_global
 <span class="keyword">if</span> nargout &gt; 0,
     sout = cvx___.solvers.list(cvx___.solvers.selected).name;
     slist = cvx___.solvers.names;
-<span class="keyword">end</span>
-
-<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
-<span class="comment">% See the file COPYING.txt for full copyright information.</span>
-<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
-\n
---></body></html>
-<a name="minimize"></a>
-
-<!DOCTYPE html
-  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <!--
-This HTML was auto-generated from MATLAB code.
-To make changes, update the MATLAB code and republish this document.
-      --><title>minimize</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="minimize.m"><style type="text/css">
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
-
-html { min-height:100%; margin-bottom:1px; }
-html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
-html body td { vertical-align:top; text-align:left; }
-
-h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
-h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
-h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
-
-a { color:#005fce; text-decoration:none; }
-a:hover { color:#005fce; text-decoration:underline; }
-a:visited { color:#004aa0; text-decoration:none; }
-
-p { padding:0px; margin:0px 0px 20px; }
-img { padding:0px; margin:0px 0px 20px; border:none; }
-p img, pre img, tt img, li img { margin-bottom:0px; } 
-
-ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
-ul li { padding:0px; margin:0px 0px 7px 0px; }
-ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
-ul li ol li { list-style:decimal; }
-ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
-ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
-ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
-ol li ol li { list-style-type:lower-alpha; }
-ol li ul { padding-top:7px; }
-ol li ul li { list-style:square; }
-
-.content { font-size:1.2em; line-height:140%; padding: 20px; }
-
-pre, tt, code { font-size:12px; }
-pre { margin:0px 0px 20px; }
-pre.error { color:red; }
-pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
-pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
-
-@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
-
-span.keyword { color:#0000FF }
-span.comment { color:#228B22 }
-span.string { color:#A020F0 }
-span.untermstring { color:#B20000 }
-span.syscmd { color:#B28C00 }
-
-.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
-.footer p { margin:0px; }
-.footer a { color:#878787; }
-.footer a:hover { color:#878787; text-decoration:underline; }
-.footer a:visited { color:#878787; }
-
-table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
-table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
-
-
-
-
-
-  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> minimize( varargin )
-
-<span class="comment">%MINIMIZE Specifiies a convex (or affine) objective to be maximized.</span>
-
-<span class="keyword">global</span> cvx___
-prob = evalin( <span class="string">'caller'</span>, <span class="string">'cvx_problem'</span>, <span class="string">'[]'</span> );
-<span class="keyword">if</span> ~isa( prob, <span class="string">'cvxprob'</span> ),
-    error( <span class="string">'No CVX model exists in this scope.'</span> );
-<span class="keyword">elseif</span> isempty( cvx___.problems ) || cvx___.problems( end ).self ~= prob,
-    error( <span class="string">'Internal CVX data corruption. Please CLEAR ALL and rebuild your model.'</span> );
-<span class="keyword">elseif</span> nargin &lt; 1,
-    error( <span class="string">'Objective expression missing.'</span> );
-<span class="keyword">elseif</span> iscellstr( varargin ),
-    x = evalin( <span class="string">'caller'</span>, sprintf( <span class="string">'%s '</span>, varargin{:} ) );
-<span class="keyword">elseif</span> nargin &gt; 1,
-    error( <span class="string">'Too many input arguments.'</span> );
-<span class="keyword">else</span>
-    x = varargin{1};
-<span class="keyword">end</span>
-<span class="keyword">try</span>
-    newobj( prob, <span class="string">'minimize'</span>, x );
-<span class="keyword">catch</span> exc
-    rethrow( exc )
-<span class="keyword">end</span>
-
-<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
-<span class="comment">% See the file COPYING.txt for full copyright information.</span>
-<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
-\n
---></body></html>
-<a name="subject"></a>
-
-<!DOCTYPE html
-  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <!--
-This HTML was auto-generated from MATLAB code.
-To make changes, update the MATLAB code and republish this document.
-      --><title>subject</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="subject.m"><style type="text/css">
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
-
-html { min-height:100%; margin-bottom:1px; }
-html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
-html body td { vertical-align:top; text-align:left; }
-
-h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
-h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
-h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
-
-a { color:#005fce; text-decoration:none; }
-a:hover { color:#005fce; text-decoration:underline; }
-a:visited { color:#004aa0; text-decoration:none; }
-
-p { padding:0px; margin:0px 0px 20px; }
-img { padding:0px; margin:0px 0px 20px; border:none; }
-p img, pre img, tt img, li img { margin-bottom:0px; } 
-
-ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
-ul li { padding:0px; margin:0px 0px 7px 0px; }
-ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
-ul li ol li { list-style:decimal; }
-ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
-ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
-ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
-ol li ol li { list-style-type:lower-alpha; }
-ol li ul { padding-top:7px; }
-ol li ul li { list-style:square; }
-
-.content { font-size:1.2em; line-height:140%; padding: 20px; }
-
-pre, tt, code { font-size:12px; }
-pre { margin:0px 0px 20px; }
-pre.error { color:red; }
-pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
-pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
-
-@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
-
-span.keyword { color:#0000FF }
-span.comment { color:#228B22 }
-span.string { color:#A020F0 }
-span.untermstring { color:#B20000 }
-span.syscmd { color:#B28C00 }
-
-.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
-.footer p { margin:0px; }
-.footer a { color:#878787; }
-.footer a:hover { color:#878787; text-decoration:underline; }
-.footer a:visited { color:#878787; }
-
-table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
-table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
-
-
-
-
-
-  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> subject( to )
-
-<span class="comment">%SUBJECT Implements the "subject to" keyword.</span>
-<span class="comment">%   The keyword</span>
-<span class="comment">%      SUBJECT TO</span>
-<span class="comment">%   is a "no-op"---that is, it has no functional value. It is provided</span>
-<span class="comment">%   solely to allow CVX models to read more closely to their mathematical</span>
-<span class="comment">%   counterparts; e.g.</span>
-<span class="comment">%      MINIMIZE( &lt;objective&gt; )</span>
-<span class="comment">%      SUBJECT TO</span>
-<span class="comment">%           &lt;constraint1&gt;</span>
-<span class="comment">%           ...</span>
-<span class="comment">%   It may be omitted without altering the model in any way.</span>
-
-<span class="comment">% We had some consistency checking code here, but given that this is supposed to be</span>
-<span class="comment">% no-op, it seems sensible to remove it all.</span>
-
-<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
-<span class="comment">% See the file COPYING.txt for full copyright information.</span>
-<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
-\n
---></body></html>
-<a name="variables"></a>
-
-<!DOCTYPE html
-  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <!--
-This HTML was auto-generated from MATLAB code.
-To make changes, update the MATLAB code and republish this document.
-      --><title>variables</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="variables.m"><style type="text/css">
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
-
-html { min-height:100%; margin-bottom:1px; }
-html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
-html body td { vertical-align:top; text-align:left; }
-
-h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
-h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
-h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
-
-a { color:#005fce; text-decoration:none; }
-a:hover { color:#005fce; text-decoration:underline; }
-a:visited { color:#004aa0; text-decoration:none; }
-
-p { padding:0px; margin:0px 0px 20px; }
-img { padding:0px; margin:0px 0px 20px; border:none; }
-p img, pre img, tt img, li img { margin-bottom:0px; } 
-
-ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
-ul li { padding:0px; margin:0px 0px 7px 0px; }
-ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
-ul li ol li { list-style:decimal; }
-ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
-ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
-ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
-ol li ol li { list-style-type:lower-alpha; }
-ol li ul { padding-top:7px; }
-ol li ul li { list-style:square; }
-
-.content { font-size:1.2em; line-height:140%; padding: 20px; }
-
-pre, tt, code { font-size:12px; }
-pre { margin:0px 0px 20px; }
-pre.error { color:red; }
-pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
-pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
-
-@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
-
-span.keyword { color:#0000FF }
-span.comment { color:#228B22 }
-span.string { color:#A020F0 }
-span.untermstring { color:#B20000 }
-span.syscmd { color:#B28C00 }
-
-.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
-.footer p { margin:0px; }
-.footer a { color:#878787; }
-.footer a:hover { color:#878787; text-decoration:underline; }
-.footer a:visited { color:#878787; }
-
-table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
-table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
-
-
-
-
-
-  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> variables( varargin )
-
-<span class="comment">%VARIABLES Declares one or more CVX variables.</span>
-<span class="comment">%   VARIABLES x1 x2 x3 ..., where x1, x2, x3, etc. are valid</span>
-<span class="comment">%   variable names, declares multiple cvx variables. It is</span>
-<span class="comment">%   exactly equivalent to issuing a separate VARIABLE command</span>
-<span class="comment">%   for each x1, x2, x3, ...</span>
-<span class="comment">%</span>
-<span class="comment">%   VARIABLES allows the declaration of vector, matrix, and</span>
-<span class="comment">%   array variables. However, unlike VARIABLE, structure modifiers</span>
-<span class="comment">%   such as "symmetric", "toeplitz", etc. are NOT permitted. Thus</span>
-<span class="comment">%   VARIABLES cannot be used with variables with structure.</span>
-<span class="comment">%</span>
-<span class="comment">%   Examples:</span>
-<span class="comment">%      variables x y z;</span>
-<span class="comment">%      variables x(100) y z(100,10);</span>
-<span class="comment">%</span>
-<span class="comment">%   See also VARIABLE, DUAL, DUALS.</span>
-
-<span class="keyword">if</span> nargin &lt; 1,
-    error( <span class="string">'Incorrect syntax for VARIABLES. Type HELP VARIABLES for details.'</span> );
-<span class="keyword">elseif</span> ~iscellstr( varargin ),
-    error( <span class="string">'All arguments must be strings.'</span> );
-<span class="keyword">end</span>
-<span class="keyword">for</span> k = 1 : nargin,
-	evalin( <span class="string">'caller'</span>, [ <span class="string">'variable '</span>, varargin{k} ] );
 <span class="keyword">end</span>
 
 <span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
