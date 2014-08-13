@@ -128,11 +128,11 @@ Factor     - ML order time          : 0.00              GP order time          :
 Factor     - nonzeros before factor : 2.85e+05          after factor           : 2.86e+05        
 Factor     - dense dim.             : 40                flops                  : 1.29e+07        
 ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
-0   1.6e+01  2.0e+00  3.6e+01  0.00e+00   -3.750000000e+01  0.000000000e+00   1.0e+00  0.10  
+0   1.6e+01  2.0e+00  3.6e+01  0.00e+00   -3.750000000e+01  0.000000000e+00   1.0e+00  0.09  
 1   8.0e-01  1.0e-01  1.8e+00  1.00e+00   -1.883875997e+00  -3.759317918e-04  5.0e-02  0.13  
 2   4.4e-02  5.5e-03  1.0e-01  1.01e+00   -1.023893505e-01  -5.188676780e-04  2.7e-03  0.15  
 3   9.4e-03  1.2e-03  2.2e-02  1.15e+00   -2.132232254e-02  -1.669205656e-03  5.9e-04  0.17  
-4   5.0e-03  6.2e-04  1.1e-02  1.32e+00   -1.137934439e-02  -2.254846722e-03  3.1e-04  0.19  
+4   5.0e-03  6.2e-04  1.1e-02  1.32e+00   -1.137934439e-02  -2.254846722e-03  3.1e-04  0.18  
 5   2.4e-03  3.0e-04  5.5e-03  1.29e+00   -6.335356796e-03  -2.432209080e-03  1.5e-04  0.20  
 6   8.5e-04  1.1e-04  1.9e-03  1.24e+00   -3.680339055e-03  -2.443549456e-03  5.3e-05  0.22  
 7   1.9e-04  2.3e-05  4.3e-04  1.16e+00   -2.679462869e-03  -2.428656524e-03  1.2e-05  0.24  
@@ -308,6 +308,8 @@ plot_data = [];
     plot_data = [plot_data; stats(i).step, stats(i).scale_f];
 <span class="keyword">end</span>
 semilogy(plot_data(:, 1), plot_data(:, 2));
+legend(<span class="string">'Projected Gradient Descent'</span>);
+xlabel(<span class="string">'Step'</span>); ylabel(<span class="string">'$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
 
 w = A' * alpha;
 predicted = B * w;
@@ -348,6 +350,7 @@ plot_data = [];
 <span class="keyword">end</span>
 figure; semilogy(plot_data(:, 1), plot_data(:, 2), <span class="string">'b--'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 3), <span class="string">'r-'</span>); legend(<span class="string">'FISTA'</span>, <span class="string">'Projected Gradient Descent'</span>);
+xlabel(<span class="string">'Step'</span>); ylabel(<span class="string">'$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
 </pre><img vspace="5" hspace="5" src="svm_algorithm_02.png" alt=""> <h2>Descent FISTA<a name="6"></a></h2><pre class="codeinput">lambda = 1.0;
 all_ones = ones(n_train, 1);
 L = svds(A, 1)^2;
@@ -378,6 +381,7 @@ plot_data = [];
 figure; semilogy(plot_data(:, 1), plot_data(:, 4), <span class="string">'k-'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 2), <span class="string">'b--'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 3), <span class="string">'r-'</span>); legend(<span class="string">'Descent FISTA'</span>, <span class="string">'FISTA'</span>, <span class="string">'Projected Gradient Descent'</span>);
+xlabel(<span class="string">'Step'</span>); ylabel(<span class="string">'$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
 </pre><img vspace="5" hspace="5" src="svm_algorithm_03.png" alt=""> <h2>Nesterov's second method<a name="7"></a></h2><pre class="codeinput">lambda = 1.0;
 all_ones = ones(n_train, 1);
 L = svds(A, 1)^2;
@@ -401,10 +405,13 @@ plot_data = [];
     plot_data = [plot_data; fista_stats(i).step, fista_stats(i).scale_f, <span class="keyword">...</span>
         projected_gradient_descent_stats(i).scale_f, descent_fista_stats(i).scale_f, nesterov_stats(i).scale_f];
 <span class="keyword">end</span>
-figure; semilogy(plot_data(:, 1), plot_data(:, 5), <span class="string">'g-'</span>); hold <span class="string">on</span>
+
+h = figure; semilogy(plot_data(:, 1), plot_data(:, 5), <span class="string">'g-'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 4), <span class="string">'k-'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 2), <span class="string">'b--'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 3), <span class="string">'r-'</span>); legend(<span class="string">'Nesterov'</span>, <span class="string">'Descent FISTA'</span>, <span class="string">'FISTA'</span>, <span class="string">'Projected Gradient Descent'</span>);
+xlabel(<span class="string">'Step'</span>); ylabel(<span class="string">'$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
+saveTightFigure(h, <span class="string">'plots/a.pdf'</span>);
 </pre><img vspace="5" hspace="5" src="svm_algorithm_04.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Leukemia
@@ -465,6 +472,8 @@ for i = 1 : size(stats, 1)
     plot_data = [plot_data; stats(i).step, stats(i).scale_f];
 end
 semilogy(plot_data(:, 1), plot_data(:, 2));
+legend('Projected Gradient Descent');
+xlabel('Step'); ylabel('$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$', 'Interpreter','latex');
 
 w = A' * alpha;
 predicted = B * w;
@@ -498,6 +507,7 @@ for i = 1 : size(stats, 1)
 end
 figure; semilogy(plot_data(:, 1), plot_data(:, 2), 'bREPLACE_WITH_DASH_DASH'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 3), 'r-'); legend('FISTA', 'Projected Gradient Descent');
+xlabel('Step'); ylabel('$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$', 'Interpreter','latex');
 
 %% Descent FISTA
 lambda = 1.0;
@@ -530,6 +540,7 @@ end
 figure; semilogy(plot_data(:, 1), plot_data(:, 4), 'k-'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 2), 'bREPLACE_WITH_DASH_DASH'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 3), 'r-'); legend('Descent FISTA', 'FISTA', 'Projected Gradient Descent');
+xlabel('Step'); ylabel('$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$', 'Interpreter','latex');
 
 %% Nesterov's second method
 lambda = 1.0;
@@ -555,10 +566,12 @@ for i = 1 : size(stats, 1)
     plot_data = [plot_data; fista_stats(i).step, fista_stats(i).scale_f, ...
         projected_gradient_descent_stats(i).scale_f, descent_fista_stats(i).scale_f, nesterov_stats(i).scale_f];
 end
-figure; semilogy(plot_data(:, 1), plot_data(:, 5), 'g-'); hold on
+
+h = figure; semilogy(plot_data(:, 1), plot_data(:, 5), 'g-'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 4), 'k-'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 2), 'bREPLACE_WITH_DASH_DASH'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 3), 'r-'); legend('Nesterov', 'Descent FISTA', 'FISTA', 'Projected Gradient Descent');
-
+xlabel('Step'); ylabel('$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$', 'Interpreter','latex');
+saveTightFigure(h, 'plots/a.pdf');
 ##### SOURCE END #####
 --></body></html>

@@ -65,7 +65,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Leukemia</a></li><li><a href="#2">CVX</a></li><li><a href="#3">Fmincon</a></li><li><a href="#4">Projected Gradient Descent</a></li><li><a href="#5">FISTA</a></li><li><a href="#6">Descent FISTA</a></li><li><a href="#7">Nesterov's second method</a></li></ul><h2>Called Functions</h2><ul><li><a href="#cvx_begin">cvx_begin </a></li><li><a href="#cvx_end">cvx_end </a></li><li><a href="#cvx_solver">cvx_solver </a></li><li><a href="#evaluate_classification">evaluate_classification </a></li><li><a href="#proj_unit_box">proj_unit_box </a></li><li><a href="#svm_qp">svm_qp </a></li></ul></div><h2>Leukemia<a name="1"></a></h2><pre class="codeinput"><span class="keyword">global</span> lambda A
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Leukemia</a></li><li><a href="#2">CVX</a></li><li><a href="#3">Fmincon</a></li><li><a href="#4">Projected Gradient Descent</a></li><li><a href="#5">FISTA</a></li><li><a href="#6">Descent FISTA</a></li><li><a href="#7">Nesterov's second method</a></li></ul><h2>Called Functions</h2><ul><li><a href="#cvx_begin">cvx_begin </a></li><li><a href="#cvx_end">cvx_end </a></li><li><a href="#cvx_solver">cvx_solver </a></li><li><a href="#evaluate_classification">evaluate_classification </a></li><li><a href="#proj_unit_box">proj_unit_box </a></li><li><a href="#svm_qp">svm_qp </a></li><li><a href="#saveTightFigure">saveTightFigure </a></li></ul></div><h2>Leukemia<a name="1"></a></h2><pre class="codeinput"><span class="keyword">global</span> lambda A
 rng(123);
 cvx_solver <span class="string">mosek</span>;
 leukemia = load(<span class="string">'./matlab_data/leukemia_train_and_test.mat'</span>);
@@ -128,11 +128,11 @@ Factor     - ML order time          : 0.00              GP order time          :
 Factor     - nonzeros before factor : 2.85e+05          after factor           : 2.86e+05        
 Factor     - dense dim.             : 40                flops                  : 1.29e+07        
 ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
-0   1.6e+01  2.0e+00  3.6e+01  0.00e+00   -3.750000000e+01  0.000000000e+00   1.0e+00  0.10  
+0   1.6e+01  2.0e+00  3.6e+01  0.00e+00   -3.750000000e+01  0.000000000e+00   1.0e+00  0.09  
 1   8.0e-01  1.0e-01  1.8e+00  1.00e+00   -1.883875997e+00  -3.759317918e-04  5.0e-02  0.13  
 2   4.4e-02  5.5e-03  1.0e-01  1.01e+00   -1.023893505e-01  -5.188676780e-04  2.7e-03  0.15  
 3   9.4e-03  1.2e-03  2.2e-02  1.15e+00   -2.132232254e-02  -1.669205656e-03  5.9e-04  0.17  
-4   5.0e-03  6.2e-04  1.1e-02  1.32e+00   -1.137934439e-02  -2.254846722e-03  3.1e-04  0.19  
+4   5.0e-03  6.2e-04  1.1e-02  1.32e+00   -1.137934439e-02  -2.254846722e-03  3.1e-04  0.18  
 5   2.4e-03  3.0e-04  5.5e-03  1.29e+00   -6.335356796e-03  -2.432209080e-03  1.5e-04  0.20  
 6   8.5e-04  1.1e-04  1.9e-03  1.24e+00   -3.680339055e-03  -2.443549456e-03  5.3e-05  0.22  
 7   1.9e-04  2.3e-05  4.3e-04  1.16e+00   -2.679462869e-03  -2.428656524e-03  1.2e-05  0.24  
@@ -308,6 +308,8 @@ plot_data = [];
     plot_data = [plot_data; stats(i).step, stats(i).scale_f];
 <span class="keyword">end</span>
 semilogy(plot_data(:, 1), plot_data(:, 2));
+legend(<span class="string">'Projected Gradient Descent'</span>);
+xlabel(<span class="string">'Step'</span>); ylabel(<span class="string">'$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
 
 w = A' * alpha;
 predicted = B * w;
@@ -348,6 +350,7 @@ plot_data = [];
 <span class="keyword">end</span>
 figure; semilogy(plot_data(:, 1), plot_data(:, 2), <span class="string">'b--'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 3), <span class="string">'r-'</span>); legend(<span class="string">'FISTA'</span>, <span class="string">'Projected Gradient Descent'</span>);
+xlabel(<span class="string">'Step'</span>); ylabel(<span class="string">'$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
 </pre><img vspace="5" hspace="5" src="svm_algorithm_02.png" alt=""> <h2>Descent FISTA<a name="6"></a></h2><pre class="codeinput">lambda = 1.0;
 all_ones = ones(n_train, 1);
 L = svds(A, 1)^2;
@@ -378,6 +381,7 @@ plot_data = [];
 figure; semilogy(plot_data(:, 1), plot_data(:, 4), <span class="string">'k-'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 2), <span class="string">'b--'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 3), <span class="string">'r-'</span>); legend(<span class="string">'Descent FISTA'</span>, <span class="string">'FISTA'</span>, <span class="string">'Projected Gradient Descent'</span>);
+xlabel(<span class="string">'Step'</span>); ylabel(<span class="string">'$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
 </pre><img vspace="5" hspace="5" src="svm_algorithm_03.png" alt=""> <h2>Nesterov's second method<a name="7"></a></h2><pre class="codeinput">lambda = 1.0;
 all_ones = ones(n_train, 1);
 L = svds(A, 1)^2;
@@ -401,10 +405,13 @@ plot_data = [];
     plot_data = [plot_data; fista_stats(i).step, fista_stats(i).scale_f, <span class="keyword">...</span>
         projected_gradient_descent_stats(i).scale_f, descent_fista_stats(i).scale_f, nesterov_stats(i).scale_f];
 <span class="keyword">end</span>
-figure; semilogy(plot_data(:, 1), plot_data(:, 5), <span class="string">'g-'</span>); hold <span class="string">on</span>
+
+h = figure; semilogy(plot_data(:, 1), plot_data(:, 5), <span class="string">'g-'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 4), <span class="string">'k-'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 2), <span class="string">'b--'</span>); hold <span class="string">on</span>
 semilogy(plot_data(:, 1), plot_data(:, 3), <span class="string">'r-'</span>); legend(<span class="string">'Nesterov'</span>, <span class="string">'Descent FISTA'</span>, <span class="string">'FISTA'</span>, <span class="string">'Projected Gradient Descent'</span>);
+xlabel(<span class="string">'Step'</span>); ylabel(<span class="string">'$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$'</span>, <span class="string">'Interpreter'</span>,<span class="string">'latex'</span>);
+saveTightFigure(h, <span class="string">'plots/a.pdf'</span>);
 </pre><img vspace="5" hspace="5" src="svm_algorithm_04.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Leukemia
@@ -465,6 +472,8 @@ for i = 1 : size(stats, 1)
     plot_data = [plot_data; stats(i).step, stats(i).scale_f];
 end
 semilogy(plot_data(:, 1), plot_data(:, 2));
+legend('Projected Gradient Descent');
+xlabel('Step'); ylabel('$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$', 'Interpreter','latex');
 
 w = A' * alpha;
 predicted = B * w;
@@ -498,6 +507,7 @@ for i = 1 : size(stats, 1)
 end
 figure; semilogy(plot_data(:, 1), plot_data(:, 2), 'bREPLACE_WITH_DASH_DASH'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 3), 'r-'); legend('FISTA', 'Projected Gradient Descent');
+xlabel('Step'); ylabel('$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$', 'Interpreter','latex');
 
 %% Descent FISTA
 lambda = 1.0;
@@ -530,6 +540,7 @@ end
 figure; semilogy(plot_data(:, 1), plot_data(:, 4), 'k-'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 2), 'bREPLACE_WITH_DASH_DASH'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 3), 'r-'); legend('Descent FISTA', 'FISTA', 'Projected Gradient Descent');
+xlabel('Step'); ylabel('$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$', 'Interpreter','latex');
 
 %% Nesterov's second method
 lambda = 1.0;
@@ -555,11 +566,13 @@ for i = 1 : size(stats, 1)
     plot_data = [plot_data; fista_stats(i).step, fista_stats(i).scale_f, ...
         projected_gradient_descent_stats(i).scale_f, descent_fista_stats(i).scale_f, nesterov_stats(i).scale_f];
 end
-figure; semilogy(plot_data(:, 1), plot_data(:, 5), 'g-'); hold on
+
+h = figure; semilogy(plot_data(:, 1), plot_data(:, 5), 'g-'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 4), 'k-'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 2), 'bREPLACE_WITH_DASH_DASH'); hold on
 semilogy(plot_data(:, 1), plot_data(:, 3), 'r-'); legend('Nesterov', 'Descent FISTA', 'FISTA', 'Projected Gradient Descent');
-
+xlabel('Step'); ylabel('$\left ( f \left ( x^{(k)} \right ) - f^* \right ) / \left | f^* \right |$', 'Interpreter','latex');
+saveTightFigure(h, 'plots/a.pdf');
 ##### SOURCE END #####
 --></body></html>
 <a name="cvx_begin"></a>
@@ -1453,6 +1466,102 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
         g = A * A' * alpha - lambda * ones(size(alpha));
     <span class="keyword">end</span>
 <span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="saveTightFigure"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>saveTightFigure</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="saveTightFigure.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> saveTightFigure(h,outfilename)
+<span class="comment">% SAVETIGHTFIGURE(H,OUTFILENAME) Saves figure H in file OUTFILENAME without</span>
+<span class="comment">%   the white space around it.</span>
+<span class="comment">%</span>
+<span class="comment">% by ``a grad student"</span>
+<span class="comment">% http://tipstrickshowtos.blogspot.com/2010/08/how-to-get-rid-of-white-margin-in.html</span>
+
+<span class="comment">% get the current axes</span>
+ax = get(h, <span class="string">'CurrentAxes'</span>);
+
+<span class="comment">% make it tight</span>
+ti = get(ax,<span class="string">'TightInset'</span>);
+set(ax,<span class="string">'Position'</span>,[ti(1) ti(2) 1-ti(3)-ti(1) 1-ti(4)-ti(2)]);
+
+<span class="comment">% adjust the papersize</span>
+set(ax,<span class="string">'units'</span>,<span class="string">'centimeters'</span>);
+pos = get(ax,<span class="string">'Position'</span>);
+ti = get(ax,<span class="string">'TightInset'</span>);
+set(h, <span class="string">'PaperUnits'</span>,<span class="string">'centimeters'</span>);
+set(h, <span class="string">'PaperSize'</span>, [pos(3)+ti(1)+ti(3) pos(4)+ti(2)+ti(4)]);
+set(h, <span class="string">'PaperPositionMode'</span>, <span class="string">'manual'</span>);
+set(h, <span class="string">'PaperPosition'</span>,[0 0  pos(3)+ti(1)+ti(3) pos(4)+ti(2)+ti(4)]);
+
+<span class="comment">% save it</span>
+saveas(h,outfilename);
 </pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
 \n
 --></body></html>
