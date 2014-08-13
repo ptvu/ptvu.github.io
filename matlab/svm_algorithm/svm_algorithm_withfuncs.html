@@ -1,0 +1,1580 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>svm_algorithm</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="svm_algorithm.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Leukemia</a></li><li><a href="#2">CVX</a></li><li><a href="#3">Fmincon</a></li><li><a href="#4">Projected Gradient Descent</a></li></ul><h2>Called Functions</h2><ul><li><a href="#cvx_begin">cvx_begin </a></li><li><a href="#cvx_end">cvx_end </a></li><li><a href="#cvx_solver">cvx_solver </a></li><li><a href="#minimize">minimize </a></li><li><a href="#subject">subject </a></li><li><a href="#variables">variables </a></li><li><a href="#evaluate_classification">evaluate_classification </a></li><li><a href="#proj_unit_box">proj_unit_box </a></li><li><a href="#svm_qp">svm_qp </a></li></ul></div><h2>Leukemia<a name="1"></a></h2><pre class="codeinput"><span class="keyword">global</span> lambda A
+rng(123);
+cvx_solver <span class="string">mosek</span>;
+leukemia = load(<span class="string">'./matlab_data/leukemia_train_and_test.mat'</span>);
+A = leukemia.leukemia_train_data; n_train = size(A, 1); A = sparse([A ones(n_train, 1)]);
+B = leukemia.leukemia_test_data; n_test = size(B, 1); B = sparse([B ones(n_test, 1)]);
+y_train = leukemia.leukemia_train_label; A = sparse(diag(y_train)) * sparse(A);
+y_test = leukemia.leukemia_test_label;
+</pre><h2>CVX<a name="2"></a></h2><p>min 1/2 * <tt>A' * alpha</tt>^2_2 - lambda * (all_ones' * alpha)</p><pre class="codeinput">lambda = 1.0;
+all_ones = ones(n_train, 1);
+cvx_begin
+    variables <span class="string">alpha(n_train, 1)</span>
+    minimize <span class="string">1/2</span> <span class="string">*</span> <span class="string">sum_square(A' * alpha)</span> <span class="string">-</span> <span class="string">lambda</span> <span class="string">*</span> <span class="string">(all_ones' * alpha)</span>
+    subject <span class="string">to</span>
+        0 &lt;= alpha &lt;= all_ones;
+cvx_end
+w = A' * alpha;
+predicted = B * w;
+full_score = evaluate_classification(predicted, y_test);
+disp(full_score)
+alpha_cvx = alpha;
+</pre><pre class="codeoutput"> 
+Calling Mosek 7.0.0.75: 7208 variables, 7169 equality constraints
+------------------------------------------------------------
+
+MOSEK Version 7.0.0.75 (Build date: 2013-7-1 22:38:42)
+Copyright (c) 1998-2013 MOSEK ApS, Denmark. WWW: http://mosek.com
+
+Computer
+  Platform               : MACOSX/64-X86   
+  Cores                  : 8               
+
+Problem
+  Name                   :                 
+  Objective sense        : min             
+  Type                   : CONIC (conic optimization problem)
+  Constraints            : 7169            
+  Cones                  : 1               
+  Scalar variables       : 7208            
+  Matrix variables       : 0               
+  Integer variables      : 0               
+
+Optimizer started.
+Conic interior-point optimizer started.
+Presolve started.
+Linear dependency checker started.
+Linear dependency checker terminated.
+Eliminator - tries                  : 0                 time                   : 0.00            
+Eliminator - elim's                 : 0               
+Lin. dep.  - tries                  : 1                 time                   : 0.01            
+Lin. dep.  - number                 : 0               
+Presolve terminated. Time: 0.05    
+Optimizer  - threads                : 8               
+Optimizer  - solved problem         : the primal      
+Optimizer  - Constraints            : 7131
+Optimizer  - Cones                  : 1
+Optimizer  - Scalar variables       : 7170              conic                  : 7132            
+Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
+Factor     - setup time             : 0.02              dense det. time        : 0.00            
+Factor     - ML order time          : 0.00              GP order time          : 0.00            
+Factor     - nonzeros before factor : 2.85e+05          after factor           : 2.86e+05        
+Factor     - dense dim.             : 40                flops                  : 1.29e+07        
+ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
+0   1.6e+01  2.0e+00  3.6e+01  0.00e+00   -3.750000000e+01  0.000000000e+00   1.0e+00  0.10  
+1   8.0e-01  1.0e-01  1.8e+00  1.00e+00   -1.883875997e+00  -3.759317918e-04  5.0e-02  0.13  
+2   4.4e-02  5.5e-03  1.0e-01  1.01e+00   -1.023893505e-01  -5.188676780e-04  2.7e-03  0.15  
+3   9.4e-03  1.2e-03  2.2e-02  1.15e+00   -2.132232254e-02  -1.669205656e-03  5.9e-04  0.16  
+4   5.0e-03  6.2e-04  1.1e-02  1.32e+00   -1.137934439e-02  -2.254846722e-03  3.1e-04  0.18  
+5   2.4e-03  3.0e-04  5.5e-03  1.29e+00   -6.335356796e-03  -2.432209080e-03  1.5e-04  0.20  
+6   8.5e-04  1.1e-04  1.9e-03  1.24e+00   -3.680339055e-03  -2.443549456e-03  5.3e-05  0.22  
+7   1.9e-04  2.3e-05  4.3e-04  1.16e+00   -2.679462869e-03  -2.428656524e-03  1.2e-05  0.23  
+8   4.0e-05  5.0e-06  9.1e-05  1.05e+00   -2.477802299e-03  -2.425464506e-03  2.5e-06  0.25  
+9   8.2e-06  1.0e-06  1.9e-05  1.02e+00   -2.435535360e-03  -2.424844375e-03  5.1e-07  0.27  
+10  9.9e-07  1.2e-07  2.3e-06  1.00e+00   -2.425983642e-03  -2.424702531e-03  6.2e-08  0.28  
+11  5.6e-08  7.0e-09  1.3e-07  1.00e+00   -2.424751651e-03  -2.424678955e-03  3.5e-09  0.30  
+12  7.6e-10  9.5e-11  1.7e-09  1.00e+00   -2.424678479e-03  -2.424677496e-03  4.7e-11  0.32  
+Interior-point optimizer terminated. Time: 0.32. 
+
+Optimizer terminated. Time: 0.35    
+
+Interior-point solution summary
+  Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+  Solution status : OPTIMAL
+  Primal.  obj: -2.4246784790e-03   Viol.  con: 8e-10    var: 0e+00    cones: 0e+00  
+  Dual.    obj: -2.4246774958e-03   Viol.  con: 0e+00    var: 1e-11    cones: 0e+00  
+Optimizer summary
+  Optimizer                 -                        time: 0.35    
+    Interior-point          - iterations : 12        time: 0.32    
+      Basis identification  -                        time: 0.00    
+        Primal              - iterations : 0         time: 0.00    
+        Dual                - iterations : 0         time: 0.00    
+        Clean primal        - iterations : 0         time: 0.00    
+        Clean dual          - iterations : 0         time: 0.00    
+        Clean primal-dual   - iterations : 0         time: 0.00    
+    Simplex                 -                        time: 0.00    
+      Primal simplex        - iterations : 0         time: 0.00    
+      Dual simplex          - iterations : 0         time: 0.00    
+      Primal-dual simplex   - iterations : 0         time: 0.00    
+    Mixed integer           - relaxations: 0         time: 0.00    
+
+------------------------------------------------------------
+Status: Solved
+Optimal value (cvx_optval): -0.00242468
+ 
+     truePositive: 13
+     trueNegative: 14
+    falsePositive: 0
+    falseNegative: 7
+         accuracy: 0.7941
+        precision: 1
+           recall: 0.6500
+               f1: 0.7879
+
+</pre><h2>Fmincon<a name="3"></a></h2><pre class="codeinput">lambda = 1.0;
+all_ones = ones(n_train, 1);
+options = optimoptions(<span class="string">'fmincon'</span>,<span class="string">'Algorithm'</span>,<span class="string">'active-set'</span>,<span class="string">'GradObj'</span>,<span class="string">'on'</span>,<span class="string">'Display'</span>,<span class="string">'iter'</span>);
+options.MaxFunEvals = 1e9;
+alpha0 = 0.5 * all_ones;
+[alpha,fval,exitflag,output] = fmincon(@svm_qp, alpha0, [], [], [], [], zeros(size(all_ones)), all_ones, [], options);
+
+w = A' * alpha;
+predicted = B * w;
+full_score = evaluate_classification(predicted, y_test);
+disp(full_score)
+alpha_fmincon = alpha;
+</pre><pre class="codeoutput">
+                                Max     Line search  Directional  First-order 
+ Iter F-count        f(x)   constraint   steplength   derivative   optimality Procedure 
+    0      1      72018.8         -0.5                                         
+    1      3      10089.7            0            1    -4.82e+04     3.59e+04   
+    2      6      3592.08            0          0.5    -1.54e+04     9.25e+03   
+    3     12      3494.86            0       0.0625    -2.64e+03     4.36e+03   
+    4     17      3020.29            0        0.125    -3.95e+03     3.13e+03   
+    5     19      238.924    2.082e-17            1    -5.72e+03     5.37e+03   
+    6     24      254.198    1.735e-17        0.125         -636     1.28e+03   
+    7     26      26578.2    1.214e-17            1         -624     1.36e+04   
+    8     28      3354.85    1.214e-17            1       -2e+04      4.7e+03   
+    9     30        14278            0            1    -3.84e+03     9.95e+03   
+   10     33      9312.42            0          0.5    -8.33e+03     5.23e+03   
+   11     35      6996.88            0            1    -9.01e+03     8.88e+03   
+   12     38      3346.12            0          0.5    -7.49e+03     7.28e+03   
+   13     43      3160.61            0        0.125    -2.97e+03     3.29e+03   
+   14     45      1102.31    1.388e-17            1    -5.28e+03     5.07e+03   
+   15     47      719.862            0            1    -3.21e+03     3.11e+03   
+   16     52      701.088            0        0.125         -793     2.19e+03   
+   17     56      658.421            0         0.25    -2.14e+03     2.02e+03   
+   18     58      196.266            0            1    -2.19e+03     1.56e+03   
+   19     61       133.77            0          0.5         -807          708   
+   20     67      125.291            0       0.0625         -374          492   
+   21     69       103.72    1.388e-17            1         -757     1.04e+03   
+   22     71      129.616            0            1         -773     1.15e+03   
+   23     76      123.429            0        0.125         -380          928   
+   24     82       108.88            0       0.0625         -376          324   
+   25     84      103.364    3.469e-18            1         -668          906   
+   26     86      30.3269            0            1         -859          670   
+   27     93       28.724            0       0.0312         -137          535   
+   28     97      22.2847            0         0.25         -329          241   
+   29    100      19.5024    1.735e-18          0.5         -250          450   
+   30    102     0.514223    2.168e-19            1         -444          218   
+   31    105     0.290185    1.084e-19          0.5        -54.9         84.6   
+   32    108       2.3152            0          0.5          -18          119   
+   33    110      1.20375            0            1         -126          146   
+   34    113      0.91148            0          0.5        -81.1         76.7   
+   35    116     0.694746    2.168e-19          0.5        -48.2         58.4   
+   36    119      2.64404    1.084e-19          0.5        -39.3          167   
+   37    121    0.0252533            0            1         -196         38.4   
+   38    128    0.0149131    3.388e-21       0.0312        -10.2         13.1   
+   39    130    0.0569404            0            1        -6.96         15.2   
+   40    132    0.0415029    2.168e-19            1        -15.3           20   
+   41    134     0.125214    1.355e-20            1        -16.5         34.4   
+   42    136   0.00900694            0            1        -34.4         8.78   
+   43    141   0.00757833            0        0.125        -4.33         4.25   
+   44    144   0.00444765            0          0.5        -7.14         6.77   
+   45    146  0.000894925            0            1        -6.39         4.48   
+   46    152  0.000533151            0       0.0625        -1.82         4.93   
+   47    159 -8.02877e-05    2.647e-23       0.0312        -2.21         2.64   
+   48    164 -0.000446192            0        0.125        -1.88         1.82   
+   49    168 -0.000643865            0         0.25        -1.56         2.55   
+   50    171  -0.00164395            0          0.5        -2.76         1.98   
+   51    175  -0.00181571            0         0.25        -1.22         1.28   
+   52    180  -0.00182855            0        0.125       -0.826        0.964   
+   53    184  -0.00198045            0         0.25        -1.12         1.26   
+   54    188  -0.00216269            0         0.25        -1.28         1.03   
+   55    192  -0.00223119            0         0.25       -0.752        0.836   
+   56    196  -0.00232559            0         0.25       -0.913        0.675   
+   57    201  -0.00234165            0        0.125       -0.457         0.63   
+   58    206   -0.0023693            0        0.125       -0.463        0.404   
+   59    212   -0.0023853            0       0.0625       -0.392        0.269   
+   60    218  -0.00239326            0       0.0625       -0.253        0.287   
+   61    224  -0.00240017            0       0.0625       -0.205        0.185   
+   62    229  -0.00240572            0        0.125       -0.224        0.227   
+   63    234  -0.00240992            0        0.125       -0.205        0.378   
+   64    239  -0.00241309            0        0.125       -0.223        0.349   
+   65    245  -0.00241581            0       0.0625       -0.136        0.216   
+   66    251  -0.00241773            0       0.0625       -0.116        0.245   
+   67    257  -0.00242084            0       0.0625       -0.154         0.19   
+   68    264  -0.00242198            0       0.0312      -0.0973       0.0888   
+   69    271  -0.00242217            0       0.0312      -0.0463        0.158   
+   70    277  -0.00242217            0       0.0625      -0.0487       0.0862   
+   71    283  -0.00242271            0       0.0625      -0.0669       0.0848  Hessian modified  
+
+Local minimum possible. Constraints satisfied.
+
+fmincon stopped because the predicted change in the objective function
+is less than the default value of the function tolerance and constraints 
+are satisfied to within the default value of the constraint tolerance.
+
+
+
+Active inequalities (to within options.TolCon = 1e-06):
+  lower      upper     ineqlin   ineqnonlin
+   15                                 
+   30                                 
+   33                                 
+   34                                 
+   36                                 
+   37                                 
+     truePositive: 13
+     trueNegative: 14
+    falsePositive: 0
+    falseNegative: 7
+         accuracy: 0.7941
+        precision: 1
+           recall: 0.6500
+               f1: 0.7879
+
+</pre><h2>Projected Gradient Descent<a name="4"></a></h2><pre class="codeinput">alpha = 0.5 * all_ones;
+L = svds(A, 1)^2;
+step_size = 1/L;
+stats = [];
+<span class="keyword">for</span> cur_step = 1 : 400
+    [f, g] = svm_qp(alpha);
+    next = alpha - step_size * g;
+    alpha = proj_unit_box(next);
+    stats = [stats; struct(<span class="string">'step'</span>, cur_step, <span class="string">'alpha'</span>, alpha, <span class="string">'f'</span>, f, <span class="string">'scale_f'</span>, (f - cvx_optval) / abs(fval))];
+<span class="keyword">end</span>
+projected_gradient_descent_stats = stats;
+
+plot_data = [];
+<span class="keyword">for</span> i = 1 : size(stats, 1)
+    plot_data = [plot_data; stats(i).step, stats(i).scale_f];
+<span class="keyword">end</span>
+semilogy(plot_data(:, 1), plot_data(:, 2));
+
+w = A' * alpha;
+predicted = B * w;
+full_score = evaluate_classification(predicted, y_test);
+disp(full_score)
+alpha_fmincon = alpha;
+</pre><pre class="codeoutput">     truePositive: 13
+     trueNegative: 14
+    falsePositive: 0
+    falseNegative: 7
+         accuracy: 0.7941
+        precision: 1
+           recall: 0.6500
+               f1: 0.7879
+
+</pre><img vspace="5" hspace="5" src="svm_algorithm_01.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Leukemia
+global lambda A
+rng(123);
+cvx_solver mosek;
+leukemia = load('./matlab_data/leukemia_train_and_test.mat');
+A = leukemia.leukemia_train_data; n_train = size(A, 1); A = sparse([A ones(n_train, 1)]);
+B = leukemia.leukemia_test_data; n_test = size(B, 1); B = sparse([B ones(n_test, 1)]);
+y_train = leukemia.leukemia_train_label; A = sparse(diag(y_train)) * sparse(A);
+y_test = leukemia.leukemia_test_label;
+
+%% CVX
+% min 1/2 * |A' * alpha|^2_2 - lambda * (all_ones' * alpha)
+lambda = 1.0;
+all_ones = ones(n_train, 1);
+cvx_begin
+    variables alpha(n_train, 1)
+    minimize 1/2 * sum_square(A' * alpha) - lambda * (all_ones' * alpha)
+    subject to
+        0 <= alpha <= all_ones;
+cvx_end
+w = A' * alpha;
+predicted = B * w;
+full_score = evaluate_classification(predicted, y_test);
+disp(full_score)
+alpha_cvx = alpha;
+
+%% Fmincon
+lambda = 1.0;
+all_ones = ones(n_train, 1);
+options = optimoptions('fmincon','Algorithm','active-set','GradObj','on','Display','iter');
+options.MaxFunEvals = 1e9;
+alpha0 = 0.5 * all_ones;
+[alpha,fval,exitflag,output] = fmincon(@svm_qp, alpha0, [], [], [], [], zeros(size(all_ones)), all_ones, [], options);
+
+w = A' * alpha;
+predicted = B * w;
+full_score = evaluate_classification(predicted, y_test);
+disp(full_score)
+alpha_fmincon = alpha;
+
+%% Projected Gradient Descent
+alpha = 0.5 * all_ones;
+L = svds(A, 1)^2;
+step_size = 1/L;
+stats = [];
+for cur_step = 1 : 400
+    [f, g] = svm_qp(alpha);
+    next = alpha - step_size * g;
+    alpha = proj_unit_box(next);
+    stats = [stats; struct('step', cur_step, 'alpha', alpha, 'f', f, 'scale_f', (f - cvx_optval) / abs(fval))];
+end
+projected_gradient_descent_stats = stats;
+
+plot_data = [];
+for i = 1 : size(stats, 1)
+    plot_data = [plot_data; stats(i).step, stats(i).scale_f];
+end
+semilogy(plot_data(:, 1), plot_data(:, 2));
+
+w = A' * alpha;
+predicted = B * w;
+full_score = evaluate_classification(predicted, y_test);
+disp(full_score)
+alpha_fmincon = alpha;
+
+##### SOURCE END #####
+--></body></html>
+<a name="cvx_begin"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>cvx_begin</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="cvx_begin.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> cvx_begin( varargin )
+
+<span class="comment">%CVX_BEGIN    Starts a new CVX specification.</span>
+<span class="comment">%   CVX_BEGIN marks the beginning of a new CVX model. Following this command</span>
+<span class="comment">%   may be variable declarations, objective functions, and constraints, and</span>
+<span class="comment">%   a CVX_END to mark the completion of the model.</span>
+<span class="comment">%</span>
+<span class="comment">%   If another model has already been created and is still in progress, then</span>
+<span class="comment">%   CVX_BEGIN will issue a warning and clear the previous model.</span>
+<span class="comment">%</span>
+<span class="comment">%   CVX_BEGIN SDP marks the beginning of a semidefinite programming (SDP) model.</span>
+<span class="comment">%   This command alters the interpretation of inequality constraints when used</span>
+<span class="comment">%   with matrices, so that SDPs are easier to construct. Specifically,</span>
+<span class="comment">%   constraints of the form</span>
+<span class="comment">%       X &gt;= Y    X &gt; Y    Y &lt; X    Y &lt;= X</span>
+<span class="comment">%   where X and Y are matrices (i.e., not vectors or scalars), CVX will</span>
+<span class="comment">%   interpret them all as LMIs, and convert them to</span>
+<span class="comment">%        X - Y == semidefinite(size(X,1));</span>
+<span class="comment">%   X and Y _must_ be square and identically sized---with one exception:</span>
+<span class="comment">%   X or Y may also be the scalar number zero, so that expressions such as</span>
+<span class="comment">%   X &gt;= 0 have the expected meaning.</span>
+<span class="comment">%</span>
+<span class="comment">%   CVX_BEGIN GP marks the beginning of a geometric programming (GP) model. This</span>
+<span class="comment">%   command alters the definition of the VARIABLE keyword to create geometric</span>
+<span class="comment">%   variables by default GP and SDP cannot be supplied simultaneously.</span>
+<span class="comment">%</span>
+<span class="comment">%   CVX_BEGIN SET can be used to mark the beginning of a set definition---a cvx</span>
+<span class="comment">%   feasibility problem intended to describe a set for use in other models. See</span>
+<span class="comment">%   the files in the cvx subdirectory sets/ for examples. The SET keyword can be</span>
+<span class="comment">%   combined with SDP or GP to specify sets which use SDP or GP conventions;</span>
+<span class="comment">%   for example, CVX_BEGIN SET SDP</span>
+<span class="comment">%</span>
+<span class="comment">%   CVX_BEGIN SEPARABLE gives permission for CVX to solve a multiobjective</span>
+<span class="comment">%   problem simply by taking the sum of the objectives and solving the resulting</span>
+<span class="comment">%   single-objective problem. As the name implies, this produces equivalent</span>
+<span class="comment">%   results only when the subproblems are separable. Behavior is undefined when</span>
+<span class="comment">%   one or more of the subproblems is infeasible or unbounded. The keyword is</span>
+<span class="comment">%   ignored for sets and incomplete specifications.</span>
+
+<span class="keyword">if</span> ~iscellstr( varargin ), error( <span class="string">'Arguments must be strings.'</span> ); <span class="keyword">end</span>
+assignin( <span class="string">'caller'</span>, <span class="string">'cvx_problem'</span>, cvxprob( varargin{:} ) );
+
+<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
+<span class="comment">% See the file COPYING.txt for full copyright information.</span>
+<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="cvx_end"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>cvx_end</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="cvx_end.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> cvx_end
+
+<span class="comment">%CVX_END  Completes a cvx specification.</span>
+<span class="comment">%   CVX_BEGIN marks the end of a new cvx model, and instructs cvx to</span>
+<span class="comment">%   complete its processing. For standard, complete models, cvx will send</span>
+<span class="comment">%   a transformed version of the problem to a solver to obtain numeric</span>
+<span class="comment">%   results, and replace references to cvx variables with numeric values.</span>
+
+<span class="keyword">global</span> cvx___
+prob = evalin( <span class="string">'caller'</span>, <span class="string">'cvx_problem'</span>, <span class="string">'[]'</span> );
+<span class="keyword">if</span> ~isa( prob, <span class="string">'cvxprob'</span> ),
+    error( <span class="string">'No CVX model exists in this scope.'</span> );
+<span class="keyword">elseif</span> isempty( cvx___.problems ) || cvx___.problems( end ).self ~= prob,
+    error( <span class="string">'Internal CVX data corruption. Please CLEAR ALL and rebuild your model.'</span> );
+<span class="keyword">end</span>
+pstr = cvx___.problems( end );
+estruc = [];
+
+<span class="keyword">if</span> isempty( pstr.objective ) &amp;&amp; isempty( pstr.variables ) &amp;&amp; isempty( pstr.duals ) &amp;&amp; nnz( pstr.t_variable ) == 1,
+
+    warning( <span class="string">'CVX:EmptyModel'</span>, <span class="string">'Empty cvx model; no action taken.'</span> );
+    evalin( <span class="string">'caller'</span>, <span class="string">'pop( cvx_problem, ''none'' )'</span> );
+
+<span class="keyword">elseif</span> pstr.complete &amp;&amp; nnz( pstr.t_variable ) == 1,
+
+    <span class="comment">%</span>
+    <span class="comment">% Check the integrity of the variables</span>
+    <span class="comment">%</span>
+
+    <span class="keyword">if</span> isempty( pstr.variables ),
+        fn1 = cell( 0, 1 );
+        vv1 = fn1;
+    <span class="keyword">else</span>
+        fn1  = fieldnames( pstr.variables );
+        ndxs = horzcat( fn1{:} );
+        ndxs = ndxs( cumsum( cellfun( <span class="string">'length'</span>, fn1 ) ) ) ~= <span class="string">'_'</span>;
+        fn1  = fn1( ndxs );
+        vv1  = struct2cell( pstr.variables );
+        vv1  = vv1(ndxs);
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isempty( pstr.duals ),
+        fn2 = cell( 0, 1 );
+        vv2 = fn2;
+    <span class="keyword">else</span>
+        fn2  = fieldnames( pstr.duals );
+        ndxs = horzcat( fn2{:} );
+        ndxs = ndxs( cumsum( cellfun( <span class="string">'length'</span>, fn2 ) ) ) ~= <span class="string">'_'</span>;
+        fn2  = fn2( ndxs );
+        vv2  = struct2cell( pstr.dvars );
+        vv2  = vv2( ndxs );
+    <span class="keyword">end</span>
+    fn1 = [ fn1 ; fn2 ];
+    i1  = cvx_ids( vv1{:}, vv2{:} );
+    i2  = sprintf( <span class="string">'%s,'</span>, fn1{:} );
+    <span class="keyword">try</span>
+        i2 = evalin( <span class="string">'caller'</span>, sprintf( <span class="string">'cvx_ids( %s )'</span>, i2(1:end-1) ) );
+    <span class="keyword">catch</span>
+        i2 = zeros(1,numel(fn1));
+        <span class="keyword">for</span> k = 1 : length(fn1),
+            <span class="keyword">try</span>
+                i2(k) = evalin( <span class="string">'caller'</span>, sprintf( <span class="string">'cvx_ids( %s )'</span>, fn1{k} ) );
+            <span class="keyword">catch</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> any( i1 ~= i2 ),
+        evalin( <span class="string">'caller'</span>, <span class="string">'cvx_clear'</span> );
+        temp = sprintf( <span class="string">' %s'</span>, fn1{ i1 ~= i2 } );
+        error( <span class="string">'The following cvx variable(s) have been cleared or overwritten:\n  %s\nThis is often an indication that an equality constraint was\nwritten with one equals ''='' instead of two ''==''. The model\nmust be rewritten before cvx can proceed.'</span>, temp ); <span class="comment">%#ok</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%</span>
+    <span class="comment">% Pause</span>
+    <span class="comment">%</span>
+
+    <span class="keyword">if</span> cvx___.pause,
+        disp( <span class="string">' '</span> );
+        input( <span class="string">'Press Enter/Return to call the solver:'</span> );
+        disp( <span class="string">' '</span> );
+    <span class="keyword">end</span>
+
+    <span class="comment">%</span>
+    <span class="comment">% Compress and solve</span>
+    <span class="comment">%</span>
+
+    <span class="keyword">try</span>
+        solve( prob );
+    <span class="keyword">catch</span> estruc
+    <span class="keyword">end</span>
+    pstr = cvx___.problems( end );
+
+    <span class="comment">%</span>
+    <span class="comment">% Pause again!</span>
+    <span class="comment">%</span>
+
+    <span class="keyword">if</span> cvx___.pause &amp;&amp; ~cvx___.quiet,
+        disp( <span class="string">' '</span> );
+        input( <span class="string">'Press Enter/Return to continue:'</span> );
+        disp( <span class="string">' '</span> );
+    <span class="keyword">end</span>
+
+    <span class="comment">%</span>
+    <span class="comment">% Copy the variable data to the workspace</span>
+    <span class="comment">%</span>
+
+    <span class="keyword">if</span> numel( pstr.objective ) &gt; 1 &amp;&amp; ~isempty(pstr.result),
+        <span class="keyword">if</span> strfind( pstr.status, <span class="string">'Solved'</span> ),
+            pstr.result = value( pstr.objective );
+            <span class="keyword">if</span> pstr.geometric, pstr.result = exp( pstr.result ); <span class="keyword">end</span>
+        <span class="keyword">else</span>
+            pstr.result = pstr.result * ones(size(pstr.objective));
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="comment">% Removed these for simplicity. cvx_optdpt in particular was buggy,</span>
+    <span class="comment">% and I can't support it. In fact they are for internal use anyway.</span>
+    <span class="comment">% assignin( 'caller', 'cvx_optpnt',  pstr.variables );</span>
+    <span class="comment">% assignin( 'caller', 'cvx_optdpt',  pstr.duals );</span>
+    assignin( <span class="string">'caller'</span>, <span class="string">'cvx_status'</span>,  pstr.status );
+    assignin( <span class="string">'caller'</span>, <span class="string">'cvx_optval'</span>,  pstr.result );
+    assignin( <span class="string">'caller'</span>, <span class="string">'cvx_optbnd'</span>,  pstr.bound );
+    assignin( <span class="string">'caller'</span>, <span class="string">'cvx_slvitr'</span>,  pstr.iters );
+    assignin( <span class="string">'caller'</span>, <span class="string">'cvx_slvtol'</span>,  pstr.tol );
+
+    <span class="comment">%</span>
+    <span class="comment">% Compute the numerical values and clear out</span>
+    <span class="comment">%</span>
+
+    evalin( <span class="string">'caller'</span>, <span class="string">'pop( cvx_problem, ''value'' )'</span> );
+
+<span class="keyword">else</span>
+
+    <span class="comment">%</span>
+    <span class="comment">% Determine the parent problem</span>
+    <span class="comment">%</span>
+
+    p = length( cvx___.problems );
+    <span class="keyword">if</span> p &lt; 2,
+        error( <span class="string">'Internal cvx data corruption.'</span> );
+    <span class="keyword">end</span>
+    np = p - 1;
+
+    <span class="comment">%</span>
+    <span class="comment">% Move the variable structure into the parent</span>
+    <span class="comment">%</span>
+
+    vars = cvx_collapse( pstr.variables, true, false );
+    dvars = cvx_collapse( pstr.duals, true, false );
+    <span class="keyword">if</span> ~isempty( vars ) || ~isempty( dvars ),
+        pname = [ pstr.name, <span class="string">'_'</span> ];
+        <span class="keyword">if</span> ~isempty( vars ),
+            <span class="keyword">try</span>
+                ovars = cvx___.problems(np).variables.(pname);
+            <span class="keyword">catch</span>
+                ovars = {};
+            <span class="keyword">end</span>
+            ovars{end+1} = vars;
+            cvx___.problems(np).variables.(pname) = ovars;
+        <span class="keyword">end</span>
+        <span class="keyword">if</span> ~isempty( dvars ),
+            <span class="keyword">try</span>
+                ovars = cvx___.problems(np).duals.(name);
+            <span class="keyword">catch</span>
+                ovars = {};
+            <span class="keyword">end</span>
+            ovars{end+1} = dvars;
+            cvx___.problems(np).duals.(pname) = ovars;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%</span>
+    <span class="comment">% Merge the touch information</span>
+    <span class="comment">%</span>
+
+    v = cvx___.problems( np ).t_variable;
+    v = v | pstr.t_variable( 1 : size( v, 1 ), : );
+    cvx___.problems( np ).t_variable = v;
+
+    <span class="comment">%</span>
+    <span class="comment">% Process the objective and optimal point, converting to pure</span>
+    <span class="comment">% epigraph/hypograph form if necessary</span>
+    <span class="comment">%</span>
+
+    assignin( <span class="string">'caller'</span>, <span class="string">'cvx_optpnt'</span>, cvxtuple( cvx_collapse( vars, false, false ) ) );
+    assignin( <span class="string">'caller'</span>, <span class="string">'cvx_optdpt'</span>, cvxtuple( cvx_collapse( dvars, false, false ) ) );
+    x = pstr.objective;
+    <span class="keyword">if</span> isempty( x ),
+
+        assignin( <span class="string">'caller'</span>, <span class="string">'cvx_optval'</span>, 0 );
+        temp = length( pstr.t_variable ) + 1 : length( cvx___.readonly );
+        cvx___.readonly( temp ) = cvx___.readonly( temp ) - 1;
+
+    <span class="keyword">else</span>
+
+        <span class="keyword">switch</span> pstr.direction,
+            <span class="keyword">case</span> <span class="string">'minimize'</span>,
+                force = false;
+                os = +1;
+            <span class="keyword">case</span> <span class="string">'epigraph'</span>,
+                force = true;
+                os = +1;
+            <span class="keyword">case</span> <span class="string">'maximize'</span>,
+                force = false;
+                os = -1;
+            <span class="keyword">case</span> <span class="string">'hypograph'</span>,
+                force = true;
+                os = -1;
+        <span class="keyword">end</span>
+
+        <span class="keyword">if</span> ~force,
+            x = sparsify( x, <span class="string">'objective'</span> );
+        <span class="keyword">end</span>
+        xB = cvx_basis( x );
+        [ r, c ] = find( xB ); <span class="comment">%#ok</span>
+        t = r ~= 1; r = r( t );
+        cvx___.canslack( r ) = true;
+
+        <span class="comment">%</span>
+        <span class="comment">% Set the vexity flags</span>
+        <span class="comment">%</span>
+
+        cvx___.vexity( r, : ) = os;
+        cvx___.readonly( r, : ) = np;
+
+        <span class="comment">%</span>
+        <span class="comment">% Convert to geometric form if necessary</span>
+        <span class="comment">%</span>
+
+        tt = pstr.geometric;
+        <span class="keyword">if</span> any( tt ),
+            <span class="keyword">if</span> all( tt ),
+                x = exp( x );
+            <span class="keyword">else</span>
+                x( tt ) = exp( x( tt ) );
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        assignin( <span class="string">'caller'</span>, <span class="string">'cvx_optval'</span>, x );
+    <span class="keyword">end</span>
+
+    <span class="comment">%</span>
+    <span class="comment">% Set the status and clear the problem from internal storage</span>
+    <span class="comment">%</span>
+
+    evalin( <span class="string">'caller'</span>, <span class="string">'pop( cvx_problem, ''none'' )'</span> );
+
+<span class="keyword">end</span>
+
+assignin( <span class="string">'caller'</span>, <span class="string">'cvx_cputime'</span>, cputime - pstr.cputime );
+
+<span class="keyword">if</span> isempty( cvx___.problems ) &amp;&amp; cvx___.profile,
+    profile <span class="string">off</span>;
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~isempty( estruc ),
+    <span class="keyword">if</span> strncmp( estruc.identifier, <span class="string">'CVX:'</span>, 4 ),
+        throw( MException( estruc.identifier, estruc.message ) );
+    <span class="keyword">else</span>
+        rethrow( estruc );
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
+<span class="comment">% See the file COPYING.txt for full copyright information.</span>
+<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="cvx_solver"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>cvx_solver</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="cvx_solver.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [ sout, slist ] = cvx_solver( sname )
+
+<span class="comment">%CVX_SOLVER    CVX solver selection.</span>
+<span class="comment">%   CVX_SOLVER &lt;solver_name&gt; or CVX_SOLVER('&lt;solver_name&gt;')</span>
+<span class="comment">%   selects the named solver the CVX uses to solve models. The solver name</span>
+<span class="comment">%   is case-insensitive; so, for example, both 'SeDuMi' and 'sedumi' will</span>
+<span class="comment">%   select the same solver.</span>
+<span class="comment">%</span>
+<span class="comment">%   When CVX is first installed, the solver SDPT3 is selected as the</span>
+<span class="comment">%   default. For most problems, this will be a good choice; nevertheless,</span>
+<span class="comment">%   no solver is perfect, so if you encounter issues you may wish to</span>
+<span class="comment">%   experiment with other solvers.</span>
+<span class="comment">%</span>
+<span class="comment">%   There are two ways to use the CVX_SOLVER command. If you use it within</span>
+<span class="comment">%   a model---that is, between the statements CVX_BEGIN and CVX_END---then</span>
+<span class="comment">%   the new solver selection will apply only to that particular model. For</span>
+<span class="comment">%   instance, if the default solver is SDPT3, then the following structure</span>
+<span class="comment">%   will solve a single model using SeDuMi instead:</span>
+<span class="comment">%       cvx_begin</span>
+<span class="comment">%           cvx_solver sedumi</span>
+<span class="comment">%           variables ...</span>
+<span class="comment">%           ...</span>
+<span class="comment">%       cvx_end</span>
+<span class="comment">%   On the other hand, if CVX_SOLVER is called *outside* of a model, then</span>
+<span class="comment">%   the change will apply for all subsequent models, or until you call</span>
+<span class="comment">%   CVX_SOLVER once again.</span>
+<span class="comment">%</span>
+<span class="comment">%   [ SOLVER, SOLVER_LIST ] = CVX_SOLVER returns the name of the current</span>
+<span class="comment">%   solver, and a cell array containing the names of all available choices.</span>
+<span class="comment">%</span>
+<span class="comment">%   Calling CVX_SOLVER with no input or output arguments produces a listing</span>
+<span class="comment">%   of the solvers that CVX currently recognized, and an indication of the</span>
+<span class="comment">%   current solver selection and/or the default.</span>
+
+<span class="keyword">global</span> cvx___
+cvx_global
+<span class="keyword">if</span> nargin,
+    <span class="keyword">if</span> isempty( sname ),
+        sname = <span class="string">'default'</span>;
+    <span class="keyword">elseif</span> ~ischar( sname ) || size( sname, 1 ) ~= 1,
+        error( <span class="string">'Argument must be a string.'</span> );
+    <span class="keyword">end</span>
+    <span class="keyword">try</span>
+        snumber = cvx___.solvers.map.(lower(sname));
+    <span class="keyword">catch</span> <span class="comment">%#ok</span>
+        error( <span class="string">'Unknown, unusable, or missing solver: %s'</span>, sname );
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> ~isempty( cvx___.solvers.list(snumber).error ),
+        error( <span class="string">'Solver unusable due to prior errors: %s'</span>, sname );
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isempty( cvx___.problems ),
+        cvx___.solvers.selected = snumber;
+    <span class="keyword">elseif</span> ~isa( evalin( <span class="string">'caller'</span>, <span class="string">'cvx_problem'</span>, <span class="string">'[]'</span> ), <span class="string">'cvxprob'</span> ),
+        error( <span class="string">'The global CVX solver selection cannot be changed while a model is being constructed.'</span> );
+    <span class="keyword">else</span>
+        cvx___.problems(end).solver.index = snumber;
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> cvx___.solvers.active,
+        cvx_setspath;
+    <span class="keyword">end</span>
+<span class="keyword">elseif</span> nargout == 0,
+    solvers = cvx___.solvers;
+    statvec = [ 0, solvers.map.default, solvers.active ];
+    statstr = { <span class="string">'selected'</span>, <span class="string">'default'</span>, <span class="string">'active'</span> };
+    <span class="keyword">if</span> ~isempty( cvx___.problems ),
+        statvec(1) = cvx___.problems(end).solver.index;
+    <span class="keyword">else</span>
+        statvec(1) = solvers.selected;
+    <span class="keyword">end</span>
+    fprintf( <span class="string">'\n'</span> );
+    dash = <span class="string">'-'</span>;
+    solvers = solvers.list;
+    nsolv = length( solvers );
+    lens = [4,6,7,8];
+    <span class="keyword">for</span> k = 1 : nsolv,
+        <span class="keyword">if</span> isempty( solvers(k).error ),
+            nstat = statstr(k==statvec);
+            <span class="keyword">if</span> ~isempty(nstat),
+                nstat = sprintf( <span class="string">'%s,'</span>, nstat{:} );
+                nstat = nstat(1:end-1);
+            <span class="keyword">end</span>
+        <span class="keyword">else</span>
+            nstat = <span class="string">'disabled'</span>;
+        <span class="keyword">end</span>
+        lens = max( lens, [ length(solvers(k).name), length(nstat), length(solvers(k).version), length(solvers(k).location) ] );
+    <span class="keyword">end</span>
+    fmt = sprintf( <span class="string">'   %%-%ds   %%-%ds   %%-%ds   %%s\\n'</span>, lens(1), lens(2), lens(3) );
+    fprintf( fmt, <span class="string">'Name'</span>, <span class="string">'Status'</span>, <span class="string">'Version'</span>, <span class="string">'Location'</span> ); <span class="comment">%#ok</span>
+    fprintf( <span class="string">'%s\n'</span>, dash(ones(1,sum(lens)+15)) );
+    <span class="keyword">for</span> k = 1 : nsolv,
+        <span class="keyword">if</span> isempty( solvers(k).error ),
+            nstat = statstr(k==statvec);
+            <span class="keyword">if</span> ~isempty(nstat),
+                nstat = sprintf( <span class="string">'%s,'</span>, nstat{:} );
+                nstat = nstat(1:end-1);
+            <span class="keyword">else</span>
+                nstat = <span class="string">''</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">else</span>
+            nstat = <span class="string">'disabled'</span>;
+        <span class="keyword">end</span>
+        fprintf( fmt, solvers(k).name, nstat, solvers(k).version, solvers(k).location );
+    <span class="keyword">end</span>
+    fprintf( <span class="string">'\n'</span> );
+<span class="keyword">end</span>
+<span class="keyword">if</span> nargout &gt; 0,
+    sout = cvx___.solvers.list(cvx___.solvers.selected).name;
+    slist = cvx___.solvers.names;
+<span class="keyword">end</span>
+
+<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
+<span class="comment">% See the file COPYING.txt for full copyright information.</span>
+<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="minimize"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>minimize</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="minimize.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> minimize( varargin )
+
+<span class="comment">%MINIMIZE Specifiies a convex (or affine) objective to be maximized.</span>
+
+<span class="keyword">global</span> cvx___
+prob = evalin( <span class="string">'caller'</span>, <span class="string">'cvx_problem'</span>, <span class="string">'[]'</span> );
+<span class="keyword">if</span> ~isa( prob, <span class="string">'cvxprob'</span> ),
+    error( <span class="string">'No CVX model exists in this scope.'</span> );
+<span class="keyword">elseif</span> isempty( cvx___.problems ) || cvx___.problems( end ).self ~= prob,
+    error( <span class="string">'Internal CVX data corruption. Please CLEAR ALL and rebuild your model.'</span> );
+<span class="keyword">elseif</span> nargin &lt; 1,
+    error( <span class="string">'Objective expression missing.'</span> );
+<span class="keyword">elseif</span> iscellstr( varargin ),
+    x = evalin( <span class="string">'caller'</span>, sprintf( <span class="string">'%s '</span>, varargin{:} ) );
+<span class="keyword">elseif</span> nargin &gt; 1,
+    error( <span class="string">'Too many input arguments.'</span> );
+<span class="keyword">else</span>
+    x = varargin{1};
+<span class="keyword">end</span>
+<span class="keyword">try</span>
+    newobj( prob, <span class="string">'minimize'</span>, x );
+<span class="keyword">catch</span> exc
+    rethrow( exc )
+<span class="keyword">end</span>
+
+<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
+<span class="comment">% See the file COPYING.txt for full copyright information.</span>
+<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="subject"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>subject</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="subject.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> subject( to )
+
+<span class="comment">%SUBJECT Implements the "subject to" keyword.</span>
+<span class="comment">%   The keyword</span>
+<span class="comment">%      SUBJECT TO</span>
+<span class="comment">%   is a "no-op"---that is, it has no functional value. It is provided</span>
+<span class="comment">%   solely to allow CVX models to read more closely to their mathematical</span>
+<span class="comment">%   counterparts; e.g.</span>
+<span class="comment">%      MINIMIZE( &lt;objective&gt; )</span>
+<span class="comment">%      SUBJECT TO</span>
+<span class="comment">%           &lt;constraint1&gt;</span>
+<span class="comment">%           ...</span>
+<span class="comment">%   It may be omitted without altering the model in any way.</span>
+
+<span class="comment">% We had some consistency checking code here, but given that this is supposed to be</span>
+<span class="comment">% no-op, it seems sensible to remove it all.</span>
+
+<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
+<span class="comment">% See the file COPYING.txt for full copyright information.</span>
+<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="variables"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>variables</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="variables.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> variables( varargin )
+
+<span class="comment">%VARIABLES Declares one or more CVX variables.</span>
+<span class="comment">%   VARIABLES x1 x2 x3 ..., where x1, x2, x3, etc. are valid</span>
+<span class="comment">%   variable names, declares multiple cvx variables. It is</span>
+<span class="comment">%   exactly equivalent to issuing a separate VARIABLE command</span>
+<span class="comment">%   for each x1, x2, x3, ...</span>
+<span class="comment">%</span>
+<span class="comment">%   VARIABLES allows the declaration of vector, matrix, and</span>
+<span class="comment">%   array variables. However, unlike VARIABLE, structure modifiers</span>
+<span class="comment">%   such as "symmetric", "toeplitz", etc. are NOT permitted. Thus</span>
+<span class="comment">%   VARIABLES cannot be used with variables with structure.</span>
+<span class="comment">%</span>
+<span class="comment">%   Examples:</span>
+<span class="comment">%      variables x y z;</span>
+<span class="comment">%      variables x(100) y z(100,10);</span>
+<span class="comment">%</span>
+<span class="comment">%   See also VARIABLE, DUAL, DUALS.</span>
+
+<span class="keyword">if</span> nargin &lt; 1,
+    error( <span class="string">'Incorrect syntax for VARIABLES. Type HELP VARIABLES for details.'</span> );
+<span class="keyword">elseif</span> ~iscellstr( varargin ),
+    error( <span class="string">'All arguments must be strings.'</span> );
+<span class="keyword">end</span>
+<span class="keyword">for</span> k = 1 : nargin,
+	evalin( <span class="string">'caller'</span>, [ <span class="string">'variable '</span>, varargin{k} ] );
+<span class="keyword">end</span>
+
+<span class="comment">% Copyright 2005-2013 CVX Research, Inc.</span>
+<span class="comment">% See the file COPYING.txt for full copyright information.</span>
+<span class="comment">% The command 'cvx_where' will show where this file is located.</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="evaluate_classification"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>evaluate: function description</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="evaluate_classification.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>evaluate: function description</h1><pre class="codeinput"><span class="keyword">function</span> [score] = evaluate_classification(prediction, true_label)
+    indices = prediction &gt; 0;
+    prediction = -ones(size(prediction));
+    prediction(indices) = 1;
+    score = f1score(prediction, true_label);
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> [score] = f1score(prediction, trueLabel)
+    truePositive = 0; trueNegative = 0; falsePositive = 0; falseNegative = 0;
+    <span class="keyword">for</span> i = 1 : size(prediction, 1)
+        <span class="keyword">if</span> (prediction(i) == 1)
+            <span class="keyword">if</span> (prediction(i) == trueLabel(i))
+                truePositive = truePositive + 1;
+            <span class="keyword">else</span>
+                falsePositive = falsePositive + 1;
+            <span class="keyword">end</span>
+        <span class="keyword">else</span>
+            <span class="keyword">if</span> (prediction(i) == trueLabel(i))
+                trueNegative = trueNegative + 1;
+            <span class="keyword">else</span>
+                falseNegative = falseNegative + 1;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    score = {};
+    score.truePositive = truePositive;
+    score.trueNegative = trueNegative;
+    score.falsePositive = falsePositive;
+    score.falseNegative = falseNegative;
+    score.accuracy = (score.truePositive + score.trueNegative) / (score.truePositive + score.falsePositive + score.trueNegative + score.falseNegative);
+    score.precision = truePositive / (truePositive + falsePositive);
+    score.recall = truePositive / (truePositive + falseNegative);
+    score.f1 = 2 * score.precision * score.recall / (score.precision + score.recall);
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="proj_unit_box"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>proj_unit_box</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="proj_unit_box.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [r] = proj_unit_box(x)
+    r = x;
+    r(r &lt; 0) = 0;
+    r(r &gt; 1) = 1;
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
+<a name="svm_qp"></a>
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>svm_qp</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-08-13"><meta name="DC.source" content="svm_qp.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [f, g] = svm_qp(alpha)
+    <span class="keyword">global</span> lambda A
+    f = (1/2 * (alpha' * A * A' * alpha) - lambda * (ones(size(alpha))' * alpha));
+    <span class="keyword">if</span> nargout &gt;= 2
+        g = A * A' * alpha - lambda * ones(size(alpha));
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+\n
+--></body></html>
