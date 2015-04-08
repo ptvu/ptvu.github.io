@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Visualization</title>
+    <script src="./lib/d3.v3.js"></script>
+    <script src="./input/topics.js"></script>
+  </head>
+
+  <body>
+    <script>
+// ===== DEFINE CONSTANT =====
+      var width = 1024;
+      var height = 600;
+      var minFont = 15;
+      var maxFont = 20;
+      var horizontalPercentageScale = d3.scale.linear().domain([0, 100]).range([0, width]);
+      var verticalScale = d3.scale.ordinal().domain(d3.range(topics.length)).rangeRoundBands([0, height], 0.3);
+      var topicHeight = verticalScale.rangeBand();
+
+// ===== THE VISUALIZATION =====
+      var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .style("display", "block")
+        .style("margin", "auto");
+
+      topics.forEach(function(element, index) {
+        var startY = verticalScale(index);
+        showList(svg, horizontalPercentageScale(0), startY, topicHeight,
+          element.words, element.word_weights, urls=null, "red"); // NO-URL for words
+        showList(svg, horizontalPercentageScale(15), startY, topicHeight,
+          element.docs, element.doc_weights, element.doc_urls, "blue");
+      });
+
+// ===== HELPER FUNCTIONS: to appear below =====
+      function showList(svg, startX, startY, height, docs, weights, urls, topColor) {
+        var minWeight = d3.min(weights);
+        var maxWeight = d3.max(weights);
+        var fontScale = d3.scale.log()
+          .domain([maxWeight, minWeight])
+          .range([maxFont, minFont]);
+        var colorScale = d3.scale.log()
+          .domain([maxWeight, minWeight])
+          .range([topColor, "black"]);
+        var horizontalPositionScale = d3.scale.linear()
+          .domain([0, docs.length])
+          .range([0, height]);
+
+        var group = svg.append("g")
+          .attr("transform", "translate(" + startX + "," + startY + ")");
+        docs.forEach(function(element, index) {
+          group.append("a").attr("xlink:href", (urls ? urls[index] : "#")).attr("target", (urls ? "_blank" : ""))
+            .append("text")
+              .text(docs[index])
+              .attr("x", 0)
+              .attr("y", horizontalPositionScale(index))
+              .attr("font-family", "Georgia")
+              .attr("font-size", fontScale(weights[index]))
+              .attr("fill", colorScale(weights[index]))
+        });
+      }
+    </script>
+    </body>
+</html>
