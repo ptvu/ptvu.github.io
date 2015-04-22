@@ -1,0 +1,142 @@
+<html>
+	<head>
+		<title> </title>
+		<script type="text/javascript" src="protovis-r3.2.js"></script>
+		<script type="text/javascript" src="showWords.js"></script>
+		<script type="text/javascript" src="scatterLasso.js"></script>		
+	</head>	
+	<body>
+		<script type="text/javascript+protovis">
+
+//==============
+function showScatter(data, vis, height, width, bottom, left, hRightWords, hRightSizes, hLeftWords, hLeftSizes, vTopWords, vTopSizes, vBottomWords, vBottomSizes) {
+	var curVis = vis.add(pv.Panel)
+					.width(width)
+					.height(height)
+					.bottom(bottom)
+					.left(left);
+	ax = data.map(function(d) {return d.x});
+	ay = data.map(function(d) {return d.y});
+	function getMin(a) {
+		min = a[0];
+		for(i = 0; i < a.length; i++)
+			min = min < a[i] ? min : a[i];
+		return min;
+	}
+	function getMax(a) {
+		max = a[0];
+		for(i = 0; i < a.length; i++)
+			max = max > a[i] ? max : a[i];
+		return max;
+	}
+	
+	var scatterLeft = 70
+	var scatterRight = width / 2;
+	var scatterBottom = 70
+	var scatterTop = height - 150
+	var scatterWidth = scatterRight - scatterLeft
+	var scatterHeight = scatterTop - scatterBottom
+	
+	var scatter = curVis.add(pv.Panel)
+					.width(scatterWidth)
+					.height(scatterHeight)
+					.bottom(scatterBottom)
+					.left(scatterLeft)
+	
+	var x = pv.Scale.linear(getMin(ax) - 0.02, getMax(ax) + 0.05).range(scatterLeft, scatterRight);
+	var y = pv.Scale.linear(getMin(ay) - 0.02, getMax(ay) + 0.05).range(scatterBottom, scatterTop);	
+
+	var dots = scatter.add(pv.Dot)
+				.data(data)					
+				.left(function(d) x(d.x))
+				.bottom(function(d) y(d.y))
+				.size(15)
+				.strokeStyle("blue")
+				.fillStyle(function() this.strokeStyle().alpha(.2))
+				.title(function(d) d.title + " = (" + d.x.toFixed(2) + ", " + d.y.toFixed(2) + ")");
+	dots.anchor("top").add(pv.Label).text(function(d) {return d.title});
+
+	var curCategory = 0;
+	var wordPanel = wordPanel = showWords(dwords[curCategory], values[curCategory], curVis, height/2, width/2, height/4, scatterRight * 1.3, "grey", "black", 12, 40, "left");
+	dots.events("all")
+		.event("mouseover", function() {
+			curCategory = this.index;
+			wordPanel.visible(false);
+			wordPanel = showWords(dwords[curCategory], values[curCategory], curVis, height/2, width/3, height/4, scatterRight * 1.3, "grey", "black", 12, 40, "left");
+			title.text("Most distinguishing words for " + data[curCategory].title);
+			curVis.render();
+		});
+		
+	var title = curVis.add(pv.Label)
+		.text("Most distinguishing words for " + data[curCategory].title)
+		.left(scatterRight * 1.3)
+		.bottom(height/5.5)
+		.font("bold 12px georgia")
+		.textStyle("red");
+	
+	extraLen = scatterWidth * 0.1;	
+	/* Y-axis and ticks. */
+	var horRules = scatter.add(pv.Rule)
+		.data(y.ticks())
+		.bottom(y)
+		.width(function(d) {res = scatterRight - scatterLeft; if (d == 0) res = res + 2 * extraLen; return res})
+		.left(function(d) {res = scatterLeft; if (d == 0) res -= extraLen; return res})
+		.strokeStyle(function(d) d != 0 ? "#eee" : "#000");
+	
+	/*
+	horRules.anchor("left").add(pv.Label)
+		.text(y.tickFormat);		
+	*/
+	
+	horRules.anchor("right").add(pv.Dot)          
+          .shape("triangle")          
+          .angle(Math.PI / 6)
+		  .size(2)
+		  .fillStyle('black')
+		  .strokeStyle('black')
+		  .visible(function(d) d == 0);
+	
+	/* X-axis and ticks. */
+	var verRules = scatter.add(pv.Rule)
+		.data(x.ticks())
+		.left(x)
+		.strokeStyle(function(d) d != 0 ? "#eee" : "#000")
+		.height(function(d) {res = scatterTop - scatterBottom; if (d == 0) res = res + 2 * extraLen; return res;})
+		.bottom(function(d) {res = scatterBottom; if (d == 0) res -= extraLen; return res});
+		
+	/*
+	verRules.anchor("bottom").add(pv.Label)		
+		.text(x.tickFormat);
+	*/
+		
+	verRules.anchor("top").add(pv.Dot)
+		.shape("triangle")
+		.size(2)
+		.fillStyle('black')
+		.strokeStyle('black')
+		.angle(Math.PI / 3)
+		.visible(function(d) d == 0);
+	
+	var minFont = 12, maxFont = 16;
+	showWords(hRightWords, hRightSizes, curVis, height/10, width/10, height/2 * 1.05, scatterRight * 1.14, "grey", "red", minFont, maxFont, "left");
+	showWords(hLeftWords, hLeftSizes, curVis, height/10, width/10, height/2 * 0.75, scatterRight * 0.2, "grey", "blue", minFont, maxFont, "right");
+	showWords(vTopWords, vTopSizes, curVis, height/10, width/10, height * 0.86, scatterRight * 0.5, "grey", "red", minFont, maxFont, "left");	
+	showWords(vBottomWords, vBottomSizes, curVis, height/10, width/10, height * 0.12, scatterRight * 0.47, "grey", "blue", minFont, maxFont, "right");
+}
+//==============
+var vis = new pv.Panel()
+			.width(1200)
+			.height(600);
+
+showScatter(data, vis, 600, 1200, 0, 0, 
+['aircraft', 'airport', 'clear', 'control', 'runway'], [0.11421000000000001, 0.11265, 0.10535, 0.10237, 0.10195],
+['pulse', 'medicalkit', 'nurse', 'unconscious', 'aed'], [1.0, 1.0000022230000001, 1.0001397009999999, 1.000239667, 1.0003170670000001],
+['traffic', 'clearance', 'clear', 'cross', 'mile'], [0.12864, 0.11990000000000001, 0.11287, 0.098833000000000004, 0.096334000000000003],
+['declare', 'maintain', 'emergency', 'inspect', 'engine'], [0.10188, 0.10594000000000001, 0.11852, 0.11955, 0.13272]
+);
+
+vis.render();
+//==============
+		</script>
+	</body>
+</html>
